@@ -1,0 +1,63 @@
+{% extends 'base.html' %}
+{% block title %}Gameweek — Fantasy Serie A{% endblock %}
+{% block content %}
+<div class="page-container">
+  <div class="page-header">
+    <h1 class="page-title">
+      {% if gameweek %}{{ gameweek.name }}{% else %}No active gameweek{% endif %}
+    </h1>
+    {% if gameweek %}
+    <div class="gw-status">
+      {% if gameweek.is_finished %}
+        <span class="status-badge status-finished">Finished</span>
+      {% else %}
+        <span class="status-badge status-live">Live</span>
+      {% endif %}
+    </div>
+    {% endif %}
+  </div>
+
+  {% if scores %}
+  <div class="scores-table-wrap">
+    <table class="scores-table">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Player</th>
+          <th>Club</th>
+          <th>Position</th>
+          <th>Min</th>
+          <th>Goals</th>
+          <th>Assists</th>
+          <th>CS</th>
+          <th>Bonus</th>
+          <th>Points</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for score in scores %}
+        <tr class="score-row {% if forloop.counter <= 3 %}top-scorer{% endif %}">
+          <td class="rank-cell">{{ forloop.counter }}</td>
+          <td class="player-name-cell">{{ score.player.name }}</td>
+          <td><span class="team-pill" style="background:{{ score.player.team.badge_color }}">{{ score.player.team.short_name }}</span></td>
+          <td><span class="pos-pill pos-{{ score.player.position }}">{{ score.player.position }}</span></td>
+          <td>{{ score.minutes }}'</td>
+          <td>{% if score.goals %}⚽ {{ score.goals }}{% else %}—{% endif %}</td>
+          <td>{% if score.assists %}🎯 {{ score.assists }}{% else %}—{% endif %}</td>
+          <td>{% if score.clean_sheet %}✅{% else %}—{% endif %}</td>
+          <td>{{ score.bonus }}</td>
+          <td class="points-cell">{{ score.points }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="empty-state">
+    <div class="empty-icon">📋</div>
+    <p>No scores available for this gameweek yet.</p>
+    <a href="{% url 'simulate_gw' %}" class="btn-primary">Simulate Gameweek</a>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

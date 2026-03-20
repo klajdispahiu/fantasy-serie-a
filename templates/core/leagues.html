@@ -1,0 +1,79 @@
+{% extends 'base.html' %}
+{% block title %}Leagues — Fantasy Serie A{% endblock %}
+{% block content %}
+<div class="page-container">
+  <div class="page-header">
+    <h1 class="page-title">My Leagues</h1>
+  </div>
+
+  <div class="leagues-layout">
+    <div class="leagues-list">
+      {% if my_leagues %}
+        {% for league in my_leagues %}
+        <a href="{% url 'league_detail' league.id %}" class="league-card">
+          <div class="league-icon">🏆</div>
+          <div class="league-info">
+            <div class="league-name">{{ league.name }}</div>
+            <div class="league-code">Code: <strong>{{ league.invite_code }}</strong></div>
+          </div>
+          <div class="league-arrow">→</div>
+        </a>
+        {% endfor %}
+      {% else %}
+        <div class="empty-state">
+          <div class="empty-icon">🏆</div>
+          <p>You are not in any leagues yet.</p>
+        </div>
+      {% endif %}
+    </div>
+
+    <div class="leagues-actions">
+      <div class="action-card">
+        <h3 class="action-card-title">Create a League</h3>
+        <input type="text" id="new-league-name" class="form-input" placeholder="League name"/>
+        <button class="btn-primary btn-full" onclick="createLeague()">Create League</button>
+      </div>
+
+      <div class="action-card">
+        <h3 class="action-card-title">Join a League</h3>
+        <input type="text" id="join-code" class="form-input" placeholder="Invite code"/>
+        <button class="btn-secondary btn-full" onclick="joinLeague()">Join</button>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const CSRF = '{{ csrf_token }}';
+
+async function createLeague() {
+  const name = document.getElementById('new-league-name').value.trim();
+  if (!name) { alert('Please enter a league name.'); return; }
+  const res = await fetch('/api/create-league/', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': CSRF },
+    body: JSON.stringify({ name })
+  });
+  const data = await res.json();
+  if (data.success) {
+    alert(`League created! Invite code: ${data.invite_code}`);
+    location.reload();
+  }
+}
+
+async function joinLeague() {
+  const code = document.getElementById('join-code').value.trim();
+  if (!code) { alert('Please enter an invite code.'); return; }
+  const res = await fetch('/api/join-league/', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': CSRF },
+    body: JSON.stringify({ invite_code: code })
+  });
+  const data = await res.json();
+  if (data.error) { alert(data.error); }
+  else { alert(`You joined ${data.league_name}!`); location.reload(); }
+}
+</script>
+{% endblock %}

@@ -26,4 +26,6 @@ urlpatterns = [
     # Gameweek
     path('gameweek/', views.gameweek_view, name='gameweek'),
     path('simulate/', views.simulate_gw, name='simulate_gw'),
+
+    path('api/swap-player/', views.swap_player, name='swap_player'),
 ]

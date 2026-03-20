@@ -1,0 +1,130 @@
+{% extends 'base.html' %}
+{% block title %}Transfers — Fantasy Serie A{% endblock %}
+{% block content %}
+<div class="page-container">
+  <div class="page-header">
+    <h1 class="page-title">Transfer Market</h1>
+    <div class="transfer-meta">
+      <span class="transfer-badge">Free transfers: <strong>{{ free_transfers }}</strong></span>
+      <span class="budget-badge">Budget: <strong>£{{ squad.budget_remaining }}m</strong></span>
+    </div>
+  </div>
+
+  <div class="transfer-layout">
+    <div class="transfer-panel">
+      <h2 class="panel-title">Your Squad</h2>
+      <div class="transfer-squad-list" id="my-squad">
+        {% for sp in squad.squad_players.all %}
+        <div class="transfer-player-row" data-sp-id="{{ sp.id }}" data-position="{{ sp.player.position }}" data-price="{{ sp.player.price }}" onclick="selectOut(this)">
+          <div class="tp-color" style="background:{{ sp.player.team.badge_color }}"></div>
+          <div class="tp-info">
+            <div class="tp-name">{{ sp.player.name }}</div>
+            <div class="tp-meta">{{ sp.player.team.short_name }} · {{ sp.player.position }}</div>
+          </div>
+          <div class="tp-price">£{{ sp.player.price }}m</div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <div class="transfer-arrow-col">
+      <div class="transfer-arrow">⇄</div>
+      <div class="selected-info" id="selected-info">
+        <p class="selected-hint">Select a player to sell</p>
+      </div>
+    </div>
+
+    <div class="transfer-panel">
+      <h2 class="panel-title">Market</h2>
+      <div class="market-filters">
+        <select class="filter-select" id="market-position" onchange="loadMarket()">
+          <option value="">All positions</option>
+          <option value="GK">Goalkeeper</option>
+          <option value="DEF">Defender</option>
+          <option value="MID">Midfielder</option>
+          <option value="FWD">Forward</option>
+        </select>
+        <input type="text" class="filter-input" placeholder="Search..." id="market-search" oninput="filterMarket()"/>
+      </div>
+      <div class="transfer-market-list" id="market-list">
+        <p class="market-hint">Select a player from your squad first</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const CSRF = '{{ csrf_token }}';
+let selectedOutId = null;
+let selectedPosition = null;
+let marketPlayers = [];
+
+function selectOut(el) {
+  document.querySelectorAll('.transfer-player-row').forEach(r => r.classList.remove('selected-out'));
+  el.classList.add('selected-out');
+  selectedOutId = el.dataset.spId;
+  selectedPosition = el.dataset.position;
+  document.getElementById('selected-info').innerHTML = `
+    <p class="selected-name">Selling: <strong>${el.querySelector('.tp-name').textContent}</strong></p>
+    <p class="selected-pos">Position: <strong>${selectedPosition}</strong></p>
+  `;
+  document.getElementById('market-position').value = selectedPosition;
+  loadMarket();
+}
+
+async function loadMarket() {
+  const pos = document.getElementById('market-position').value || selectedPosition || '';
+  const res = await fetch(`/api/players/?position=${pos}&max_price=15`);
+  const data = await res.json();
+  marketPlayers = data.players.filter(p => !p.owned);
+  renderMarket(marketPlayers);
+}
+
+function filterMarket() {
+  const q = document.getElementById('market-search').value.toLowerCase();
+  renderMarket(marketPlayers.filter(p => p.name.toLowerCase().includes(q)));
+}
+
+function renderMarket(players) {
+  const list = document.getElementById('market-list');
+  if (!players.length) {
+    list.innerHTML = '<p class="market-hint">No players found.</p>';
+    return;
+  }
+  list.innerHTML = players.map(p => `
+    <div class="transfer-player-row market-row" onclick="confirmTransfer(${p.id}, '${p.name}', ${p.price})">
+      <div class="tp-color" style="background:${p.team_color}"></div>
+      <div class="tp-info">
+        <div class="tp-name">${p.name}</div>
+        <div class="tp-meta">${p.team_short} · ${p.position}</div>
+      </div>
+      <div class="tp-price">£${p.price}m</div>
+      <button class="btn-transfer-in">Sign</button>
+    </div>
+  `).join('');
+}
+
+async function confirmTransfer(playerInId, playerInName, price) {
+  if (!selectedOutId) {
+    alert('Please select a player to sell first.');
+    return;
+  }
+  if (!confirm(`Confirm transfer? Sign ${playerInName} for £${price}m`)) return;
+  const res = await fetch('/api/transfer/', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': CSRF },
+    body: JSON.stringify({ player_in_id: playerInId, squad_player_out_id: selectedOutId })
+  });
+  const data = await res.json();
+  if (data.error) {
+    alert(data.error);
+  } else {
+    alert('Transfer complete!');
+    location.reload();
+  }
+}
+</script>
+{% endblock %}

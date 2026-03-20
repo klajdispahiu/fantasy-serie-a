@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+{% block title %}Register — Fantasy Serie A{% endblock %}
+{% block content %}
+<div class="auth-page">
+  <div class="auth-card">
+    <div class="auth-badge">SERIE A</div>
+    <h1 class="auth-title">Create Your Account</h1>
+    <p class="auth-sub">Start your Fantasy Serie A journey</p>
+    <form method="post" class="auth-form">
+      {% csrf_token %}
+      <div class="form-group">
+        <label class="form-label">Username</label>
+        <input type="text" name="username" class="form-input" placeholder="Choose a username" required/>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Team Name</label>
+        <input type="text" name="squad_name" class="form-input" placeholder="E.g. FC Invincibles" required/>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Password</label>
+        <input type="password" name="password" class="form-input" placeholder="••••••••" required/>
+      </div>
+      <button type="submit" class="btn-primary btn-full">Create Account</button>
+    </form>
+    <p class="auth-switch">Already have an account? <a href="{% url 'login' %}">Sign In</a></p>
+  </div>
+</div>
+{% endblock %}

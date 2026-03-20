@@ -265,3 +265,23 @@ def simulate_gw(request):
             next_gw.save()
         messages.success(request, f'{gameweek.name} simulated! Scores updated.')
     return redirect('gameweek')
+
+@login_required
+@require_POST
+def swap_player(request):
+    """Swap a starter with a bench player."""
+    data = json.loads(request.body)
+    squad = get_object_or_404(Squad, user=request.user)
+    starter_sp = get_object_or_404(SquadPlayer, id=data.get('starter_id'), squad=squad)
+    bench_sp = get_object_or_404(SquadPlayer, id=data.get('bench_id'), squad=squad)
+
+    if starter_sp.player.position != bench_sp.player.position:
+        return JsonResponse({'error': 'You can only swap players of the same position.'}, status=400)
+
+    # Swap their bench status
+    starter_sp.is_on_bench = True
+    bench_sp.is_on_bench = False
+    starter_sp.save()
+    bench_sp.save()
+
+    return JsonResponse({'success': True})
