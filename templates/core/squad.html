@@ -198,22 +198,24 @@ function handlePlayerClick(spId, position, isBench) {
     return;
   }
 
-  // Both are starters or both are bench — just re-select
+  // Both are starters or both are bench — re-select
   if (isBench === selectedSwapIsBench) {
     cancelSwap();
     selectPlayerForSwap(spId, position, isBench);
     return;
   }
 
-  // Position mismatch
-  if (position !== selectedSwapPosition) {
-    showToast(`Can only swap same position players (${selectedSwapPosition})`, 'error');
+  // Block GK swapping with outfield
+  const oneIsGK = position === 'GK' || selectedSwapPosition === 'GK';
+  const bothAreGK = position === 'GK' && selectedSwapPosition === 'GK';
+  if (oneIsGK && !bothAreGK) {
+    showToast('Goalkeepers can only swap with goalkeepers.', 'error');
     return;
   }
 
-  // Valid swap — one starter, one bench, same position
+  // Valid swap — proceed
   const starterId = isBench ? selectedSwapId : spId;
-  const benchId  = isBench ? spId : selectedSwapId;
+  const benchId   = isBench ? spId : selectedSwapId;
   doSwap(starterId, benchId);
 }
 
@@ -223,17 +225,38 @@ function selectPlayerForSwap(spId, position, isBench) {
   selectedSwapIsBench = isBench;
 
   document.getElementById(`sp-${spId}`).classList.add('swap-selected');
+
+  const isGK = position === 'GK';
+
   document.getElementById('swap-hint-text').textContent =
     isBench
-      ? `Bench player selected (${position}) — now click a starting ${position} to swap`
-      : `Starter selected (${position}) — now click a bench ${position} to swap`;
+      ? isGK
+        ? `Bench GK selected — click the starting GK to swap`
+        : `Bench player selected — click any starting outfield player to swap`
+      : isGK
+        ? `Starting GK selected — cannot be moved to bench`
+        : `Starter selected — click any bench outfield player to swap`;
+
   document.getElementById('swap-cancel-btn').style.display = 'inline-block';
 
   // Highlight valid swap targets
   document.querySelectorAll('.player-card').forEach(card => {
     const cardIsBench = card.dataset.isBench === 'true';
     const cardPos = card.dataset.position;
-    if (card.id !== `sp-${spId}` && cardPos === position && cardIsBench !== isBench) {
+    const cardId = card.id;
+
+    if (cardId === `sp-${spId}`) return;
+
+    // GK can only target other GK on opposite side
+    if (isGK) {
+      if (cardPos === 'GK' && cardIsBench !== isBench) {
+        card.classList.add('swap-target');
+      }
+      return;
+    }
+
+    // Outfield: highlight any outfield player on the opposite side
+    if (cardPos !== 'GK' && cardIsBench !== isBench) {
       card.classList.add('swap-target');
     }
   });

@@ -122,9 +122,20 @@ def add_player(request):
         return JsonResponse({'error': f'Max {pos_limits[player.position]} {player.position}s allowed.'}, status=400)
 
     with transaction.atomic():
-        SquadPlayer.objects.create(squad=squad, player=player, is_on_bench=squad.squad_players.count() >= 11)
-        squad.budget_remaining -= player.price
-        squad.save()
+    # GK rule: if a GK already exists as a starter, new GK goes to bench
+        if player.position == 'GK':
+            gk_starter_exists = squad.squad_players.filter(
+                player__position='GK',
+                is_on_bench=False
+            ).exists()
+            is_bench = gk_starter_exists
+        else:
+            starters_count = squad.squad_players.filter(is_on_bench=False).count()
+            is_bench = starters_count >= 11
+
+    SquadPlayer.objects.create(squad=squad, player=player, is_on_bench=is_bench)
+    squad.budget_remaining -= player.price
+    squad.save()
 
     return JsonResponse({'success': True, 'budget_remaining': float(squad.budget_remaining)})
 
@@ -275,10 +286,11 @@ def swap_player(request):
     starter_sp = get_object_or_404(SquadPlayer, id=data.get('starter_id'), squad=squad)
     bench_sp = get_object_or_404(SquadPlayer, id=data.get('bench_id'), squad=squad)
 
-    if starter_sp.player.position != bench_sp.player.position:
-        return JsonResponse({'error': 'You can only swap players of the same position.'}, status=400)
+    # GK rule: GK can only swap with GK
+    if starter_sp.player.position == 'GK' or bench_sp.player.position == 'GK':
+        return JsonResponse({'error': 'Goalkeepers cannot be swapped with outfield players.'}, status=400)
 
-    # Swap their bench status
+    # Outfield players can swap with any position
     starter_sp.is_on_bench = True
     bench_sp.is_on_bench = False
     starter_sp.save()
