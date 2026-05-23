@@ -250,3 +250,10 @@ This project is open source under the [MIT License](LICENSE).
 This started as a personal project to learn Django properly and to build something I actually wanted to use. Serie A is one of the best leagues in the world and it deserves better than what currently exists for fantasy football. If you are a Serie A fan and a developer, feel free to fork this, improve it, and make it your own.
 
 *Forza il calcio italiano.*
+
+<img width="1369" height="777" alt="Screenshot 2026-05-23 at 7 20 39 PM" src="https://github.com/user-attachments/assets/e2ffde81-7da6-4fd6-8f38-165fd527ebec" />
+<img width="1358" height="738" alt="Screenshot 2026-05-23 at 7 21 57 PM" src="https://github.com/user-attachments/assets/152c6396-80b0-4542-9494-4f09b9279331" />
+<img width="1371" height="776" alt="Screenshot 2026-05-23 at 7 22 16 PM" src="https://github.com/user-attachments/assets/0d4a57cf-4499-453f-a245-2a70496431a9" />
+<img width="1373" height="756" alt="Screenshot 2026-05-23 at 7 22 31 PM" src="https://github.com/user-attachments/assets/25f4e4ce-b278-48d4-a54d-d31f100a5d24" />
+
+
